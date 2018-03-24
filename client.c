@@ -3,6 +3,8 @@
 #include <sys/socket.h>    //socket
 #include <arpa/inet.h> //inet_addr
 #include <unistd.h> 
+#include <stdlib.h>
+#include <errno.h>
 
 //directives are above (e.g. #include ...)
 
@@ -55,10 +57,11 @@ int find_network_newline(char * message, int bytes_inbuf){
 }
 
 int main(int argc , char *argv[]){
-    int sock;
+    int sock, name;
     struct sockaddr_in server;
-    char message[256] , server_reply[256]; 
+    char message[256] , server_reply[256], server_emisor[256]; 			//server emisor: permite conocer quien transmite el mensaje
 
+	
     //Create socket
     sock = socket(AF_INET , SOCK_STREAM , 0);
     if (sock == -1)
@@ -89,7 +92,13 @@ int main(int argc , char *argv[]){
 	r_set = all_set;
 	struct timeval tv; tv.tv_sec = 2; tv.tv_usec = 0;
 
-		
+
+
+	send(sock, argv[1], 1 , 0);//enviar el nombre de socket(1.A 2.B 3.C 4.D)
+
+
+
+	
 	after = message;
 
 	puts("Enter message: ");
@@ -119,12 +128,30 @@ int main(int argc , char *argv[]){
         	//Receive a reply from the server
         	if( recv(sock , server_reply , 256 , 0) < 0)
         	{
-			
             	puts("recv failed");
             	break;
         	}
+		strcpy(server_emisor, server_reply);
+		server_emisor[1]='\0';
+		memmove(&server_reply[0], &server_reply[1], strlen(server_reply)-0);
+		memmove(&server_reply[0], &server_reply[1], strlen(server_reply)-0);
 		
-        	printf("\nYour message is: %s\n", server_reply);
+		if (server_emisor[0]=='4') {					//compara si el emisor es 4
+			server_emisor[0]='A';					//asigna valor A al emisor para impresion
+			printf("TX es : %s \n", server_emisor); }		
+		else if (server_emisor[0]=='5'){				//compara si el emisor es 5
+			server_emisor[0]='B';					//asigna valor B al emisor para impresion
+			printf("TX es : %s \n", server_emisor);  }
+		else if (server_emisor[0]=='6'){				//compara si el emisor es 6
+			server_emisor[0]='C';					//asigna valor C al emisor para impresion
+			printf("TX es : %s \n", server_emisor);  }
+		else if (server_emisor[0]=='7') {				//compara si el emisor es 7
+			server_emisor[0]='D';					//asigna valor D al emisor para impresion
+			printf("TX es : %s \n", server_emisor);  }
+		else{
+			printf("TX es incorrecto: %s \n", server_emisor); }	//REVISA QUE EL SERVIDOR ES IN
+
+		printf("\nYour message is: %s\n", server_reply);
         	server_reply[0]='\0';
 
     	}
