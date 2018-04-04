@@ -12,7 +12,7 @@
 
 //directives are above (e.g. #include ...)
 
-//message buffer related delcartions/macros
+//message buffer related declarations/macros
 int buffer_message(char * message);
 int find_network_newline(char * message, int inbuf);
 
@@ -92,6 +92,7 @@ int main(int argc , char *argv[]){
     if (sock == -1){
         printf("Could not create socket");
     }
+   
     puts("Socket created");
     
     //serv= gethostbyname(SOCKET_ADR);
@@ -106,6 +107,11 @@ int main(int argc , char *argv[]){
     }
 
    //insert the code below into main, after you've connected to the server
+    
+    //pasar el argumento obtenido en la entrada del cliente a un valor numerico
+	//1. A, 2. B, 3. C, 4. D
+	strncat(message, argv[1], 1);
+    send(sock, message, strlen(message) + 1, 0);//envia identificador
 	puts("Connected\n");    
 
 //set up variables for select()
@@ -122,9 +128,10 @@ int main(int argc , char *argv[]){
 	char line[10] = {0};
 	char per[10]={0};
 	while (1){ //Menu principal
+		int count=1;
 		printf("\t\t*********************************\n");		
 		printf("\t\tBienvenido al menu principal: \n");
-		printf("\t\tElige: \n\t\t1.Enviar mensaje \n\t\t2.Enviar imagen \n\t\t3.Salir \n\n\n\n");
+		printf("\t\tElige: \n\t\t1.Enviar mensaje \n\t\t2.Enviar imagen \n\t\t3.Recarga \n\t\t9 o q.Salir \n\n\n\n");
 		fgets(line, sizeof(line), stdin);
 
 	if (strlen(line) == 2 && (line[0] == '1')){
@@ -136,60 +143,68 @@ int main(int argc , char *argv[]){
 		if (strlen(per) == 2 && per[0] == '1' ){
 			printf("\t\tPulse el mensaje que quiere enviar al usuario A \n\n\n\n"); //DEBE DIGITARSE 1 O 2  	
 			printf("\t\t*********************************\n");	
-			for(;;){
+			if(count==1){
+				usleep(10000000);
+				r_set = all_set;
+			   	//check to see if we can read from STDIN or sock
+				select(maxfd, &r_set, NULL, NULL, &tv);
+			
+			   	if(FD_ISSET(STDIN_FILENO, &r_set)){
+					if(buffer_message(message) == COMPLETE){
+					//Send some data
+						printf("Este es el contenido del mensaje %s\n ", message);
+						if (message == "q"){
+							printf("\n\t\t Saliendo ...");
+							count= 0;
+						}
+						else{
+							if(send(sock, message, strlen(message) + 1, 0) < 0)//NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
+							{
+								puts("Send failed");
+								return 1;
+							}
+							puts("Enter message:");
+						}
+					}
+				}
 
-			r_set = all_set;
-	   		//check to see if we can read from STDIN or sock
-			select(maxfd, &r_set, NULL, NULL, &tv);
+				if(FD_ISSET(sock, &r_set)){
+				//Receive a reply from the server
+					if( recv(sock , server_reply , 256 , 0) < 0)
+					{
+						puts("recv failed");
+						break;
+					}
+				strcpy(server_emisor, server_reply);
+				server_emisor[1]='\0';
+				memmove(&server_reply[0], &server_reply[1], strlen(server_reply)-0);
+				memmove(&server_reply[0], &server_reply[1], strlen(server_reply)-0);
+					if (server_emisor[0]=='1') {					//compara si el emisor es 4
+						server_emisor[0]='A';					//asigna valor A al emisor para impresion
+						printf("TX es : %s \n", server_emisor); }		
+					else if (server_emisor[0]=='2'){				//compara si el emisor es 5
+						server_emisor[0]='B';					//asigna valor B al emisor para impresion
+						printf("TX es : %s \n", server_emisor);  }
+					else if (server_emisor[0]=='3'){				//compara si el emisor es 6
+						server_emisor[0]='C';					//asigna valor C al emisor para impresion
+						printf("TX es : %s \n", server_emisor);  }
+					else if (server_emisor[0]=='4') {				//compara si el emisor es 7
+						server_emisor[0]='D';					//asigna valor D al emisor para impresion
+						printf("TX es : %s \n", server_emisor);  }
+					else{
+						printf("TX es incorrecto: %s \n", server_emisor); }	//REVISA QUE EL SERVIDOR ES IN
 
-	   		if(FD_ISSET(STDIN_FILENO, &r_set)){
-
-		    	if(buffer_message(message) == COMPLETE){
-		    	    //Send some data
-			printf("Este es el contenido del mensaje %s\n ", message);
-		    	    if(send(sock, message, strlen(message) + 1, 0) < 0)//NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
-		    	    {
-		    	        puts("Send failed");
-		    	        return 1;
-		    	    }
-
-		    	    puts("Enter message:");
-		    	}
-			}
-
-			if(FD_ISSET(sock, &r_set)){
-		    	//Receive a reply from the server
-		    	if( recv(sock , server_reply , 256 , 0) < 0)
-		    	{
-		        	puts("recv failed");
-		        	break;
-		    	}
-			strcpy(server_emisor, server_reply);
-			server_emisor[1]='\0';
-			memmove(&server_reply[0], &server_reply[1], strlen(server_reply)-0);
-			memmove(&server_reply[0], &server_reply[1], strlen(server_reply)-0);
-		
-			if (server_emisor[0]=='4') {					//compara si el emisor es 4
-				server_emisor[0]='A';					//asigna valor A al emisor para impresion
-				printf("TX es : %s \n", server_emisor); }		
-			else if (server_emisor[0]=='5'){				//compara si el emisor es 5
-				server_emisor[0]='B';					//asigna valor B al emisor para impresion
-				printf("TX es : %s \n", server_emisor);  }
-			else if (server_emisor[0]=='6'){				//compara si el emisor es 6
-				server_emisor[0]='C';					//asigna valor C al emisor para impresion
-				printf("TX es : %s \n", server_emisor);  }
-			else if (server_emisor[0]=='7') {				//compara si el emisor es 7
-				server_emisor[0]='D';					//asigna valor D al emisor para impresion
-				printf("TX es : %s \n", server_emisor);  }
-			else{
-				printf("TX es incorrecto: %s \n", server_emisor); }	//REVISA QUE EL SERVIDOR ES IN
-
-			printf("\nYour message is: %s\n", server_reply);
-		    	server_reply[0]='\0';
-
-			}
-			}	
-	  	}
+					printf("\nYour message is: %s\n", server_reply);
+						//server_reply[0]='\0';
+						//server_emisor=0;
+						memset(server_reply, 0, sizeof(server_reply));
+						memset(server_emisor, 0, sizeof(server_emisor));
+							}
+						}//end if
+		else{
+			break;
+		}				
+	  	}//end mensaje Usuario A
 	  	else if (strlen(per) == 2 && per[0] == '2') {
 			printf("\t\tPulse el mensaje que quiere enviar al usuario B \n\n\n\n"); //DEBE DIGITARSE 1 O 2  	
 		printf("\t\t*********************************\n");		
@@ -234,14 +249,81 @@ int main(int argc , char *argv[]){
 				printf("\t\t*********************************\n\n\n\n");		 	
 		  	}
 			else{
-				printf("\t\tError, mas suerte para la proxima...\n\n\n\n");
+				printf("\t\tHubo un error de digitacion, vuelva a intentarlo mas tarde...\n\n");
 			} 	
 		}
 		else{
-			printf("\t\tError, mas suerte para la proxima...\n\n");
+			printf("\t\tHubo un error de digitacion, vuelva a intentarlo mas tarde...\n\n");
 		}
 	}
 	else if (strlen(line) == 2 && (line[0] == '3')){
+		printf("\t\tEntrando al sistema de recarga de cliente...\n\n\n\n\n\n");
+		printf("\t\tDigite el cliente a recargar: \n\t\t1.Celular \n\t\t2.Terminal A \n\t\t3.Terminal B\n\n\n\n");
+		fgets(per, sizeof(per), stdin); 
+		if (strlen(per) == 2 && per[0] == '1' ){//celular
+			printf("\t\tBienvenido a la recarga del Celular \n");
+			printf("\t\tDigite el monto a recargar: \n\t\t1.1000 \n\t\t2.2000 \n\t\t3.Otro\n\n\n\n");
+			fgets(per, sizeof(per), stdin); 
+			if (strlen(per) == 2 && per[0] == '1' ){//mil
+				printf("\t\tAplicando recarga de 1000 al Celular \n");
+			}
+			else if (strlen(per) == 2 && per[0] == '2' ){//2 mil
+				printf("\t\tAplicando recarga de 2000 al Celular \n");
+			}
+			else if (strlen(per) == 2 && per[0] == '3' ){//Otro 
+			printf("\t\tDigite el monto a recargar al Celular sin espacios ni signos ej: 1500\n\n\n\n");
+			fgets(per, sizeof(per), stdin); 
+					printf("\t\tAplicando recarga de %s al Celular \n", per);
+			}
+			else{
+			printf("\t\tHubo un error de digitacion, vuelva a intentarlo mas tarde...\n\n");
+			}
+			
+	  	}
+	  	else if (strlen(per) == 2 && per[0] == '2' ){//terminal A
+			printf("\t\tBienvenido a la recarga de la Terminal A \n");
+			printf("\t\tDigite el monto a recargar: \n\t\t1.1000 \n\t\t2.2000 \n\t\t3.Otro\n\n\n\n");
+			fgets(per, sizeof(per), stdin); 
+			if (strlen(per) == 2 && per[0] == '1' ){//mil
+				printf("\t\tAplicando recarga de 1000 a la Terminal A \n");
+			}
+			else if (strlen(per) == 2 && per[0] == '2' ){//2 mil
+				printf("\t\tAplicando recarga de 2000 a la Terminal A \n");
+			}
+			else if (strlen(per) == 2 && per[0] == '3' ){//Otro 
+			printf("\t\tDigite el monto a recargar a la Terminal A sin espacios ni signos ej: 1500\n\n\n\n");
+			fgets(per, sizeof(per), stdin); 
+					printf("\t\tAplicando recarga de %s a la Terminal A \n", per);
+			}
+			else{
+			printf("\t\tHubo un error de digitacion, vuelva a intentarlo mas tarde...\n\n");
+			}
+
+	  	}
+	  	else if (strlen(per) == 2 && per[0] == '3' ){//terminal B
+			printf("\t\tBienvenido a la recarga de la Terminal B \n");
+			printf("\t\tDigite el monto a recargar: \n\t\t1.1000 \n\t\t2.2000 \n\t\t3.Otro\n\n\n\n");
+			fgets(per, sizeof(per), stdin); 
+			if (strlen(per) == 2 && per[0] == '1' ){//mil
+				printf("\t\tAplicando recarga de 1000 a la Terminal B \n");
+			}
+			else if (strlen(per) == 2 && per[0] == '2' ){//2 mil
+				printf("\t\tAplicando recarga de 2000 a la Terminal B \n");
+			}
+			else if (strlen(per) == 2 && per[0] == '3' ){//Otro 
+			printf("\t\tDigite el monto a recargar a la Terminal B sin espacios ni signos ej: 1500\n\n\n\n");
+			fgets(per, sizeof(per), stdin); 
+					printf("\t\tAplicando recarga de %s a la Terminal B \n", per);
+			}
+			else{
+			printf("\t\tHubo un error de digitacion, vuelva a intentarlo mas tarde...\n\n");
+			}
+	  	}
+	  	else{
+				printf("\t\tError, mas suerte para la proxima...\n\n\n\n");
+			}
+	}	
+	else if (strlen(line) == 2 && (line[0] == '9' || line[0] == 'q')){
 		printf("\t\tCerrando cliente...\n\n\n\n\n\n");
 		close(sock);
 		return 0;
