@@ -20,7 +20,6 @@ int find_network_newline(char * message, int inbuf);
 #define BUF_SIZE 256
 #define SOCKET_PORT "5000"
 #define SOCKET_ADR "localhost"
-#define filename "tes" //ubicacion de archivo de texto de imagen
 
 
 static int inbuf; // how many bytes are currently in the buffer?
@@ -52,7 +51,7 @@ int buffer_message(char * message){
 }
 
 int prueba_error(char * message){
-    int bytes_read=sizeof(message);
+    int bytes_read = sizeof(message);
     short flag = -1; // indicates if returned_data has been set
     inbuf += bytes_read;
     int where; // location of network newline
@@ -120,18 +119,29 @@ int main(int argc , char *argv[]){
 
 	//set the initial position of after
 	after = message;
-	//char linea[256];
-	//system("/home/gabino/Documentos/ProyectoLabComu/imgb64.sh");
+	char linea[256];
 	int na;
+	char arr[5];
+	char cdr[4];
 	char c;
    	int cs= 0;
-   	char zero[256]={'\0'};
-    FILE *file;
-  	file = fopen("tes", "r");
+   	char rpl[1]; //respuesta de verificacion de error
+   	system("test=$(base64 prueba.png > tes)");//convertir imagen a base64
+   	//system("rm -r output");
+    //FILE *file;
+  	//file = fopen("tes", "r");
 	//unsigned long fsize;
-	system("rm{output}");
 	FILE *out;
 	out= fopen("output","a+t");
+	/*if(out==NULL){
+	    fclose(out);
+	    out= fopen("output","a+t");
+	}
+	else{
+	    fclose(out);
+	    system("rm{output}");
+	    out= fopen("output","a+t");
+	}*/
 
 	char line[10] = {0};
 	char per[10]={0};
@@ -140,13 +150,13 @@ int main(int argc , char *argv[]){
       printf("Elige: \n1.Enviar mensaje \n 2.Enviar imagen \n 3.Salir ");
       fgets(line, sizeof(line), stdin);
 
-      if (strlen(line) == 2 && (line[0] == '1')){
+      if (line[0] == '1'){
          printf("Elige a quien enviar el mensaje:\n");
          while(1){
          printf("Digita: \n1.Usuario A \n 2.Usuario B ");
          fgets(per, sizeof(per), stdin);
 
-       if (strlen(per) == 2 && (per[0] == '1' || per[0] == '2' )){
+       if (per[0] == '1' || per[0] == '2' ){
         //puts("Enter message: ");
         for(;;){
     	r_set = all_set;
@@ -168,32 +178,45 @@ int main(int argc , char *argv[]){
 		
     	if(FD_ISSET(sock, &r_set)){
         	//Receive a reply from the server
-        	if( recv(sock , server_reply , 77, 0) < 0){
+        	if( recv(sock , server_reply , 256, 0) < 0){
             	puts("recv failed");
+            	rpl[0]='n';
+            	send(sock, rpl, 1, 0);
             	break;
         	}
         	cs=0;
+            int re=0;
         	while(cs<77){
                 if((server_reply[cs]=='\n')&&(cs<76)){
                 	//server_reply[cs]=EOF;
-                	server_reply[cs]='\0';
+                	//server_reply[cs]='\0';
                 	//memmove(server_reply, server_reply, cs+2);
-                	printf("\ncs es: %i\n",cs);
+                	//printf("\ncs es: %i\n",cs);
                 	fputc(EOF, out);
                 	fclose(out);
                 	system("com=$(base64 -d output > out.png)");
                 	usleep(10000);
+                	system("rm -r output");
                 	break;
                 }
+                //re+=(server_reply[cs]-'0');
                 fputc(server_reply[cs], out);
-                 
                 cs+=1;
         	}
+        	//re+=38;
+        	/*printf("\nRE es:%d\n",re);
+        	printf("SR es %c%c%c%c\n", server_reply[cs],server_reply[cs+1],server_reply[cs+2],server_reply[cs+3]);
+        	sprintf(cdr, "%d", re); //creo arreglo para detectar errores
+        	printf("CDR1 es %s\n", cdr);
+        	if((cdr[0]==server_reply[cs])&&(cdr[1]==server_reply[cs+1])&&(cdr[2]==server_reply[cs+2])&&(cdr[3]==server_reply[na+3])){//Detecto igualdad con lo que recibo
+        	    printf("El paquete llego bien");
+        	}*/
+        	
         	printf("\nReply:%s", server_reply);
-        	printf("\nCaracter:%i\n", server_reply[cs]);
-        	//server_reply[0]='\0';
-        	memmove(server_reply, server_reply, 256-cs);
-        	strcpy(server_reply, zero);
+        	//printf("\nCaracter:%i\n", server_reply[cs]);
+        	rpl[0]='y';
+            send(sock, rpl, 1, 0);
+        	server_reply[0]='\0';
         	//usleep(10000);
     	}
       	}
@@ -206,24 +229,24 @@ int main(int argc , char *argv[]){
              }
          }
       }
-      else if(strlen(line) == 2 && (line[0] == '2')){
-      printf("Elige a quien enviar la imagen:\n");
-        //while(1){
+      else if(line[0] == '2'){
+        printf("Elige a quien enviar la imagen:\n");
         printf("Digita: \n1.Usuario A \n 2.Usuario B ");
         fgets(per, sizeof(per), stdin);
         
-      	if(strlen(per) == 2 && (per[0] == '1' || per[0] == '2')){
-    	r_set = all_set;
-    
-   		//check to see if we can read from STDIN or sock
-        //select(maxfd, &r_set, NULL, NULL, &tv);
+      	if(per[0] == '1' || per[0] == '2'){
+    	FILE *file;
+      	file = fopen("tes", "r");
 		while ((c=getc(file)) != EOF){
         	na=0;
+        	int deter=0; //Para contar el valor de las variables y detectar errores
 			while (c!='\n')//|| (c!=EOF))
 			{
-				buffer[na]=c;//almacene datos en el arreglo
+				linea[na]=c;//almacene datos en el arreglo
 				//printf("este es el contenido de mensaje %c\n", c);
 				na+=1;
+				//int d = c-'0';
+				//deter+=d;
 				//usleep(100000);
 				c= getc(file);
 				if(c==EOF){
@@ -232,18 +255,40 @@ int main(int argc , char *argv[]){
 				}
 				
 			}
-			    //printf("c tiene %i\n", c);
-			    buffer[na]=c;
-			    //na+=1;
-			    //buffer[0]= na +'0'; //longitud de linea
-
+			    //printf("Deter es: %d\n", deter);
+			    linea[na]=c;
+			    //sprintf(arr, "%d", deter);
+			    //linea[na+1]=arr[0];
+			    //linea[na+2]=arr[1];
+			    //linea[na+3]=arr[2];
+			    //linea[na+4]=arr[3];
+			    na+=1;
+			    linea[na]='\0';
+                //strcpy(buffer, linea);
 				//if(prueba_error(buffer)==COMPLETE){
-	        	if(send(sock, buffer, 77, 0) < 0)// ::NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
+	        	if(send(sock, linea, 256, 0) < 0)
 	        	    {
 	        	        puts("Send failed");
 	        	        return 1;
 	        	    }
-        	//}
+	        	while(1){//Para recibir la verificacion de error
+	        	    if(FD_ISSET(sock, &r_set)){
+        	            if( recv(sock , server_reply , 256, 0) < 0){
+            	            puts("recv failed");
+            	            send(sock, linea, 256, 0);
+        	            }
+        	            else{
+        	                if((server_reply[0]=='y')){
+        	                    printf("\nDatos enviados correctamente\n");
+        	                    break;
+        	                }
+        	                else{
+        	                    send(sock, linea, 256, 0);
+        	                }
+        	            }
+	        	    }
+	           }
+        	    //}
         	}
 		fclose(file);
     	}      
@@ -253,8 +298,6 @@ int main(int argc , char *argv[]){
          const size_t pos = sizeof(per) - 1; 
          if (strlen(per) == pos && per[pos] != '\n') while (fgetc(stdin) != '\n');
       	}
-      	
-      	//}	
       }
       else
       {
