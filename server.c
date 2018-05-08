@@ -11,21 +11,18 @@
 
 #define PORT "9034"   // port we're listening on
 
-int A,B,C,D ;
-char a[256], b[256], c[256], d[256]; //punteros
+int A,B,C,D, client_n, ident ;
+char a[256], b[256], c[256], d[256], client_name[6]; //punteros
 
 // get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
+void *get_in_addr(struct sockaddr *sa){
     if (sa->sa_family == AF_INET) {
         return &(((struct sockaddr_in*)sa)->sin_addr);
     }
-
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-
-//message buffer related delcartions/macros
+//message buffer related declarations/macros
 int buffer_message(char * message);
 int find_network_newline(char * message, int inbuf);
 #define COMPLETE 0
@@ -46,8 +43,8 @@ int main(void){
     struct sockaddr_storage remoteaddr; // client address
     socklen_t addrlen;
 
-    char buf[256], tx[256], em[12] ;    // buffer for client data
-    int nbytes, rx;
+    char buf[256], em[12] ,line[256] ;    // buffer for client data
+    int nbytes, rx, tx;
 
     char remoteIP[INET6_ADDRSTRLEN];
 
@@ -58,7 +55,7 @@ int main(void){
 
     FD_ZERO(&master);    // clear the master and temp sets
     FD_ZERO(&read_fds);
-printf("Waiting for Clients \n");
+	printf("Waiting for Clients \n");
     // get us a socket and bind it
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
@@ -119,7 +116,6 @@ printf("Waiting for Clients \n");
             if (FD_ISSET(i, &read_fds)) { // we got one!!
                 if (i == listener) {
                     // handle new connections
-
                     addrlen = sizeof remoteaddr;
                     newfd = accept(listener,
                         (struct sockaddr *)&remoteaddr,
@@ -132,61 +128,11 @@ printf("Waiting for Clients \n");
                         if (newfd > fdmax) {    // keep track of the max
                             fdmax = newfd;
                         }
-                        printf("selectserver: new connection from %s on "
-                            "socket %d\n",
-                            inet_ntop(remoteaddr.ss_family,
-                                get_in_addr((struct sockaddr*)&remoteaddr),
-                                remoteIP, INET6_ADDRSTRLEN),
-                            newfd);
-
-//	%%%%		(while para mantener todo)
-			switch (newfd) {
-			case 4: 
-			{  A = newfd;
-			strcpy(a, inet_ntop(remoteaddr.ss_family,
-                            get_in_addr((struct sockaddr*)&remoteaddr),
-                            remoteIP,INET6_ADDRSTRLEN));
-			printf("servidor conectado A a la dir %s on socket " 
-				"%d\n",a, A);
-			
-			   
-				break;
-			}
-			case 5:  
-			{
-			B = newfd;
-			strcpy(b, inet_ntop(remoteaddr.ss_family,
-                            get_in_addr((struct sockaddr*)&remoteaddr),
-                            remoteIP,INET6_ADDRSTRLEN));
-			printf("servidor conectado B a la dir %s on socket " 
-				"%d\n",b, B);
-			
-				break;
-			}
-			case 6:
-			{C = newfd;
-			strcpy(c, inet_ntop(remoteaddr.ss_family,
-                            get_in_addr((struct sockaddr*)&remoteaddr),
-                            remoteIP,INET6_ADDRSTRLEN));			
-
-			printf("servidor conectado C a la dir %s on socket "
-					"	 %d\n",c, C);
-			
-				break;
-			}
-			default: {
-			int D = newfd;
-			strcpy(d, inet_ntop(remoteaddr.ss_family,
-                            get_in_addr((struct sockaddr*)&remoteaddr),
-                            remoteIP,INET6_ADDRSTRLEN));
-			printf("servidor conectado D a la dir %s on socket "
-						" %d\n",d, D);
-			
-				break;
-			}}
-			
-                    }
-                } else {
+                        printf("selectserver: new connection from %s on socket %d\n", inet_ntop(remoteaddr.ss_family, get_in_addr((struct sockaddr*)&remoteaddr), remoteIP, INET6_ADDRSTRLEN), newfd);
+                        client_n=1;//espera que le diga quien es
+                  }//end else
+                }
+                else {
                     // handle data from a client
                     memset(buf, 0, 256);
 
@@ -202,33 +148,90 @@ printf("Waiting for Clients \n");
                         close(i); // bye!
                         FD_CLR(i, &master); // remove from master set
                     } else {
-
                         // we got some data from a client
-                        for(j = 0; j <= fdmax; j++) {
-                            // send to everyone!
-
-                            if (FD_ISSET(j, &master)) {
-                                // except the listener and ourselves
-					
-                                if (j != listener && j != i) {
-
-					strcpy(tx, buf);
-					tx[1]='\0';
-					int rx = atoi(tx);
-					sprintf(em, "%d", i);
-					if (j == rx){
-					printf("Contenido del buffer es : %s \n El emisor es: %d\n", buf, i);
-					printf("El RX es: %d \n", rx); 
-					memmove(&buf[0], &buf[1], strlen(buf)-0);
-					printf("Contenido del buffer es : %s \n El emisor es: %d\n", buf, i);
-					strcat(em, buf);
-                                    if (send(rx, em, strlen(em), 0) == -1) {
-                                        perror("send");}
-                                    }
-                                }
-			
-                            }
+                        
+                        if (client_n==1){
+                        	ident=atoi(buf);
+                        	switch(ident){
+                        		case 1:
+                        			A = i;
+                        			printf("A");
+                        			client_n=0;
+                        			break;
+                        		case 2:
+                        			B = i;
+                        			printf("B");
+                        			client_n=0;
+                        			break;
+                        		case 3:
+                        			C = i;
+                        			printf("C");
+                        			client_n=0;
+                        			break;
+								default:
+									D = i;
+                        			printf("D");
+                        			client_n=0;
+                        			break;
+								
+									//printf("conexion no valida");
+									//client_n=0;
+									//break;
+                        	}
+                        
                         }
+                        
+                        else{
+                        
+		                    for(j = 0; j <= fdmax; j++) {
+		                        // send to everyone!
+		                        	
+		                        if (FD_ISSET(j, &master)) {
+		                            // except the listener and ourselves
+		                            if (j != listener && j != i) {
+										if (buf[0]=='A') {rx=A; }
+										else if (buf[0]=='B') {rx=B; }
+										else if (buf[0]=='C') {rx=C; }
+										else if (buf[0]=='D') {rx=D; }
+										else if (buf[0]=='S') { 
+										//memmove(&buf[0], &buf[1], strlen(buf)-0);
+										memset(line, 0, sizeof(line));
+										printf("Contenido del buffer en server es: %s \n", buf);
+										strcpy(line, buf);
+										memmove(&line[0], &line[1], strlen(line)-0);
+										printf("Contenido del buffer en server es: %s \n", line);
+										
+										int val = atoi(line);
+										printf("\t\tValor es: %d", val);
+										memset(line, 0, sizeof(line));
+										printf("\n");
+									
+										 }
+										if (j == rx){
+											memmove(&buf[0], &buf[1], strlen(buf)-0);
+											if (i==A){
+												tx=1;
+											}
+											else if (i==B){
+												tx=2;
+											}
+											else if (i==C){
+												tx=3;
+											}
+											else if (i==D){
+												tx=4;
+											}
+											sprintf(em,"%d", tx);
+											printf("Contenido del buffer es: %s \nTX: %d identificador: %d\n", buf, i ,tx);	
+											printf("RX: %d \n", rx); 
+											strcat(em, buf);//guarda valor buffer concatenado con emisor y receptor
+											if (send(rx, em, strlen(em), 0) == -1) {
+												perror("send");}
+		                               	}
+		                            }
+		                        }
+		                    }
+		                }
                     }
                 } // END handle data from client
             } // END got new incoming connection
