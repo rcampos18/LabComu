@@ -85,7 +85,7 @@ int find_network_newline(char * message, int bytes_inbuf){
 int main(int argc , char *argv[]){
    int sock, name;
     struct sockaddr_in server;
-    char message[256] , server_reply[256],buffer[256], server_emisor[256],message1[256]; 			//server emisor: permite conocer quien transmite el mensaje
+    char message[256] , server_reply[256],buffer[256], server_emisor[256]; 			//server emisor: permite conocer quien transmite el mensaje
 
     //Create socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -148,7 +148,6 @@ int main(int argc , char *argv[]){
 			if(count==1){
 				usleep(10000000);
 				r_set = all_set;
-				
 			   	//check to see if we can read from STDIN or sock
 				select(maxfd, &r_set, NULL, NULL, &tv);
 			
@@ -161,11 +160,7 @@ int main(int argc , char *argv[]){
 							count= 0;
 						}
 						else{
-							memset(message1, 0, sizeof(message1));
-							message1[0]='A';
-							strcat(message1, message);
-							printf("Este es el contenido del mensaje acoplado %s\n ", message1);
-							if(send(sock, message1, strlen(message1) + 1, 0) < 0)//NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
+							if(send(sock, message, strlen(message) + 1, 0) < 0)//NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
 							{
 								puts("Send failed");
 								return 1;
