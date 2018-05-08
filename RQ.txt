@@ -1,0 +1,10 @@
+Para correr los clientes se debe de considerar lo siguiente:
+1.correr :
+make
+gcc testdb.c -o testdb `mysql_config --cflags --libs`
+gcc clientdb.c -o clientdb `mysql_config --cflags --libs` 
+2. ejecutar:
+./server
+./clientG 1 (donde este 1 indica que es el cliente A(1),B(2), C(3) )
+./clientdb 4 (cliente D, correspondiente a MariaDB)
+
