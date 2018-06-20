@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#define PORT "8034"   // port we're listening on
+#define PORT "9034"   // port we're listening on
 
 int A, B, C, D, client_n, ident ;
 char a[256], b[256], c[256], d[256], client_name[6],message1[255]; //punteros

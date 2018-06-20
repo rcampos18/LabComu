@@ -108,9 +108,9 @@ int main(int argc , char *argv[]) {
   puts("Socket created");
 
   //serv= gethostbyname(SOCKET_ADR);
-  server.sin_addr.s_addr = inet_addr("127.0.0.1");// INADDR_ANY;54.215.182.161
+  server.sin_addr.s_addr = inet_addr("127.0.0.1");// INADDR_ANY;
   server.sin_family = AF_INET;
-  server.sin_port = htons( 8034 );
+  server.sin_port = htons( 9034 );
 
   //Connect to remote server
   if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0) {
@@ -185,8 +185,7 @@ int main(int argc , char *argv[]) {
 
         if (server_reply[2] == 'C') {
           printf("\tEl saldo de su cuenta es : %d para C > \n", saldoC);
-          if (saldoC >0){
-          strcpy(message1, "C$");
+          strcpy(message1, "S");
           sprintf(message1, "%d" , saldoC );
           strcat(message1, message2);
           printf("\nYour message is: %s\n", message1);
@@ -194,21 +193,8 @@ int main(int argc , char *argv[]) {
           {
             puts("Send failed");
             return 1;
-          }
-          }
-          else if (saldoC <=0){
-          strcpy(message1, "C&");
-          sprintf(message1, "%d" , saldoC );
-          strcat(message1, message2);
-          printf("\nYour message is: %s\n", message1);
-          if (send(sock, message1, strlen(message1) + 1, 0) < 0) //NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
-          {
-            puts("Send failed");
-            return 1;
-          }
           }
         }
-        
         else {
           strcpy(message1, " Invalid User ");
           sprintf(message2, "%c" , server_reply[2]);
@@ -261,11 +247,8 @@ int main(int argc , char *argv[]) {
           memset(line, 0, sizeof(line));
           strcpy(line, server_reply);
           memmove(&line[0], &line[1], strlen(line) - 0);
-     		printf("%s",line);
           memmove(&line[0], &line[1], strlen(line) - 0);
-         		
           memmove(&line[0], &line[1], strlen(line) - 0);
-          
           int val = atoi(line);
 
           if (server_reply[2] == 'C') {
@@ -285,18 +268,20 @@ int main(int argc , char *argv[]) {
 
             if (saldoCn <= 0) {
               strcpy(message1, "C&" );//no tiene saldo
-              sprintf(message2, "%d ", saldoCn);
-              strcat(message1, message2);
               if (send(sock, message1, strlen(message1) + 1, 0) < 0) //NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
               {
                 puts("Send failed");
                 return 1;
               }
             }
-            //else {
+            else {
               printf(" El servicio C fue descargado exitosamente, el saldo de su cuenta nuevo es : %d ", saldoCn);
-             
-            
+              if (send(sock, message1, strlen(message1) + 1, 0) < 0) //NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
+              {
+                puts("Send failed");
+                return 1;
+              }
+            }
           }
           else {
             strcpy(message1, " Invalid User ");
@@ -370,10 +355,9 @@ int main(int argc , char *argv[]) {
               exit (1);
             }
             //  printf(" El servicio C fue recargado exitosamente, el saldo de su cuenta nuevo es : %d \n", saldoC);
-            strcpy(message1, "El servicio C fue recargado exitosamente, el saldo de su cuenta  es : ");
+            strcpy(message1, "C El servicio C fue recargado exitosamente, el saldo de su cuenta  es : ");
             sprintf(message2, "%d" , saldoC);
             strcat(message1, message2);
-            printf("\nYour message is: %s\n", message1);
             if (send(sock, message1, strlen(message1) + 1, 0) < 0) //NOTE: we have to do strlen(message) + 1 because we MUST include '\0'
             {
               puts("Send failed");
