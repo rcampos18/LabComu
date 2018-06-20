@@ -102,8 +102,7 @@ int main(int argc , char *argv[]){
 
     //Connect to remote server
     if (connect(sock , (struct sockaddr *)&server , sizeof(server)) < 0){
-        perror("connect failed. Error");
-        return 1;
+        perror("connect failed. Error")        return 1;
     }
 
    //insert the code below into main, after you've connected to the server

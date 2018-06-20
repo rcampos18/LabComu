@@ -55,11 +55,22 @@ if (con == NULL)
   if (mysql_query(con, "CREATE TABLE ClientS( Name TEXT, Saldo INT)")) {      
       finish_with_error(con);
   }
-  
-  if (mysql_query(con, "INSERT INTO ClientS VALUES('ClientC',2000)")) {
-      finish_with_error(con);
-  }
-
+    int saldoC = 300;  
+	char nameC[255] = "ClientC";
+  char query1[999];
+	
+	int num = sprintf(query1, "INSERT INTO ClientS(Name, Saldo) VALUES('%s', '%d');", nameC, saldoC);
+	if (num > sizeof(query1))
+	{
+	  printf("Error: Query too long.\n");
+	  exit (1);
+	}
+	if (mysql_query(con, query1))
+	{
+	  printf("Error: mysql_query failed.");
+	  exit (1);
+	}
+	
    if (mysql_query(con, "SELECT * FROM ClientS")) {
       finish_with_error(con);
   }
@@ -81,9 +92,8 @@ MYSQL_RES *result = mysql_store_result(con);
       { 
           printf("%s ", row[i] ? row[i] : "NULL"); 
       } 
-          printf("\n"); 
           int saldo = atoi(row[1]);
-          printf(" el saldo de su cuenta es : %d ",saldo);
+          printf(" El saldo de su cuenta es : %d \n",saldo);
           
   }
   
